@@ -25,6 +25,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     src/font.cpp
     src/battery_reporter.cpp
     src/user_interface.cpp
+    src/ui_manager.cpp
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
