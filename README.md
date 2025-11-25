@@ -1,1 +1,1 @@
-# battery-calibration-pico
+# battery-calibration-nano-serial

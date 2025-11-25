@@ -1,6 +1,5 @@
 #include "input_manager.h"
 #include "hardware/gpio.h"
-#include <pico/volatile.h>
 
 #define ENCODER_A_PIN 8
 #define ENCODER_B_PIN 9

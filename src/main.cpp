@@ -15,7 +15,7 @@ int main() {
 
     BatteryManager battery;
     if (!battery.connect()) {
-        display_print_message("Battery not found!");
+        display_draw_text("Battery not found!", 10, 10, 0xFFFF, 0x0000);
         while (true) tight_loop_contents();
     }
 

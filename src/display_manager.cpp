@@ -104,19 +104,68 @@ void display_clear() {
     write_data((uint8_t*)buffer.data(), buffer.size() * 2);
 }
 
-// Basic text functions will be added here later
-void display_print_message(const std::string& message) {
-    // This is a placeholder. A real implementation would
-    // render the text to a framebuffer and send it to the display.
-    printf("%s\n", message.c_str());
+#include "font.h"
+
+static uint16_t framebuffer[DISPLAY_WIDTH * DISPLAY_HEIGHT];
+
+static void set_pixel(int x, int y, uint16_t color) {
+    if (x >= 0 && x < DISPLAY_WIDTH && y >= 0 && y < DISPLAY_HEIGHT) {
+        framebuffer[y * DISPLAY_WIDTH + x] = color;
+    }
+}
+
+void display_draw_text(const std::string& text, int x, int y, uint16_t color, uint16_t bg_color) {
+    int start_x = x;
+    for (char c : text) {
+        if (c == '\n') {
+            y += 8;
+            x = start_x;
+            continue;
+        }
+        if (c < 32 || c > 127) c = '?';
+        const uint8_t* glyph = font[(int)c];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                set_pixel(x + j, y + i, ((glyph[i] >> j) & 1) ? color : bg_color);
+            }
+        }
+        x += 8;
+    }
+}
+
+static void render_framebuffer() {
+    uint8_t caset_data[] = {0, 0, 0, DISPLAY_WIDTH - 1};
+    write_command(ST7789_CASET);
+    write_data(caset_data, 4);
+
+    uint8_t raset_data[] = {0, 0, 0, DISPLAY_HEIGHT - 1};
+    write_command(ST7789_RASET);
+    write_data(raset_data, 4);
+
+    write_command(ST7789_RAMWR);
+    write_data((uint8_t*)framebuffer, sizeof(framebuffer));
 }
 
 void display_update_data(const BatteryData& data) {
-    // Placeholder
-    printf("Voltage: %d mV\n", data.voltage);
-    printf("Current: %d mA\n", data.current);
-    printf("SOC: %d %%\n", data.relative_state_of_charge);
+    char buffer[50];
+    sprintf(buffer, "Voltage: %d mV", data.voltage);
+    display_draw_text(buffer, 10, 10, 0xFFFF);
+    sprintf(buffer, "Current: %d mA", data.current);
+    display_draw_text(buffer, 10, 20, 0xFFFF);
+    sprintf(buffer, "SOC: %d %%", data.relative_state_of_charge);
+    display_draw_text(buffer, 10, 30, 0xFFFF);
+    render_framebuffer();
 }
 
-// Note: This implementation does not include a font renderer.
-// A full implementation would require a font library to draw text.
+void display_draw_menu(const std::vector<std::string>& items, int selected_index) {
+    int y = 10;
+    for (int i = 0; i < items.size(); i++) {
+        if (i == selected_index) {
+            display_draw_text(items[i], 10, y, 0x0000, 0xFFE0); // Black on yellow
+        } else {
+            display_draw_text(items[i], 10, y, 0xFFFF, 0x0000); // White on black
+        }
+        y += 10;
+    }
+    render_framebuffer();
+}
