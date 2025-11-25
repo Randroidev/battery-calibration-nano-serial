@@ -3,6 +3,6 @@
 
 #include "battery_manager.h"
 
-void reporter_print_data(const BatteryData& data, bool full_report);
+void reporter_print_data(const BatteryData& data);
 
 #endif // BATTERY_REPORTER_H
