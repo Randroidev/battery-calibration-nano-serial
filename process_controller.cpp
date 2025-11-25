@@ -87,11 +87,19 @@ void ProcessController::update() {
 
 void ProcessController::update_charge() {
   periodic_battery_check(true);
-  
-  if (battery.is_fully_charged() || battery.is_charge_inhibited() || battery.has_error()) {
-    if (battery.has_error()) ui_print_message(F("## Stopping charge due to battery error."));
-    else if (battery.is_charge_inhibited()) ui_print_message(F("## Stopping charge because FET was closed by battery."));
-    else ui_print_message(F("## Battery is fully charged."));
+
+  bool stop_charging = battery.is_fully_charged() || battery.has_error();
+  if (USE_ADDITIONAL_CONDITIONS) {
+    const BatteryData& data = battery.get_data();
+    stop_charging = stop_charging || (data.voltage >= 12600 || abs(data.current) < 10);
+  }
+
+  if (stop_charging) {
+    if (battery.has_error()) {
+      ui_print_message(F("## Stopping charge due to battery error."));
+    } else {
+      ui_print_message(F("## Charge finished."));
+    }
     stop_process();
   }
 }
@@ -99,10 +107,18 @@ void ProcessController::update_charge() {
 void ProcessController::update_discharge() {
   periodic_battery_check(true);
 
-  if (battery.is_fully_discharged() || battery.is_discharge_inhibited() || battery.has_error()) {
-     if (battery.has_error()) ui_print_message(F("## Stopping discharge due to battery error."));
-    else if (battery.is_discharge_inhibited()) ui_print_message(F("## Stopping discharge because FET was closed by battery."));
-    else ui_print_message(F("## Battery is fully discharged."));
+  bool stop_discharging = battery.is_fully_discharged() || battery.has_error();
+  if (USE_ADDITIONAL_CONDITIONS) {
+    const BatteryData& data = battery.get_data();
+    stop_discharging = stop_discharging || (data.voltage <= 7500 || abs(data.current) < 10);
+  }
+
+  if (stop_discharging) {
+    if (battery.has_error()) {
+      ui_print_message(F("## Stopping discharge due to battery error."));
+    } else {
+      ui_print_message(F("## Discharge finished."));
+    }
     stop_process();
   }
 }

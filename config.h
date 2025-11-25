@@ -28,6 +28,7 @@ const unsigned long DEMO_WAIT_DURATION_MS = 3000;    // 3 seconds
 
 // --- Battery Communication ---
 const int BATTERY_CONNECT_RETRIES = 3;
+const bool USE_ADDITIONAL_CONDITIONS = true;
 
 // --- Serial Communication ---
 const int SERIAL_BAUD_RATE = 9600;
