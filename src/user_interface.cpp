@@ -1,5 +1,5 @@
 #include "user_interface.h"
-#include "display_manager.h"
+#include "ui_manager.h"
 #include "input_manager.h"
 #include "config_manager.h"
 #include <vector>
@@ -45,10 +45,10 @@ static void populate_settings_menu() {
 
 static void draw_menu() {
     if (current_state == UIState::MAIN_MENU) {
-        display_draw_menu(main_menu_items, menu_index);
-    } else if (current_state == UIState::SETTINGS_MENU) {
+        ui_manager_draw_menu(main_menu_items, menu_index, "Main Menu");
+    } else if (current_state == UIState::SETTINGS_MENU || current_state == UIState::EDIT_SETTING) {
         populate_settings_menu();
-        display_draw_menu(settings_menu_items, settings_menu_index);
+        ui_manager_draw_menu(settings_menu_items, settings_menu_index, "Settings");
     }
 }
 

@@ -1,5 +1,6 @@
 #include "input_manager.h"
 #include "hardware/gpio.h"
+#include "pico/stdio.h"
 
 #define ENCODER_A_PIN 8
 #define ENCODER_B_PIN 9
@@ -49,6 +50,7 @@ void input_init() {
 UserAction input_get_action() {
     static int last_encoder_pos = 0;
 
+    // Check for encoder input first
     if (encoder_pos > last_encoder_pos) {
         last_encoder_pos = encoder_pos;
         return UserAction::ENCODER_UP;
@@ -64,6 +66,27 @@ UserAction input_get_action() {
     if (back_btn_pressed) {
         back_btn_pressed = false;
         return UserAction::BACK_PRESS;
+    }
+
+    // Check for terminal input
+    int c = getchar_timeout_us(0);
+    if (c != PICO_ERROR_TIMEOUT) {
+        switch (c) {
+            case 'w':
+            case 'W':
+                return UserAction::ENCODER_UP;
+            case 's':
+            case 'S':
+                return UserAction::ENCODER_DOWN;
+            case 'e':
+            case 'E':
+            case '\r':
+            case '\n':
+                return UserAction::ENCODER_PRESS;
+            case 'q':
+            case 'Q':
+                return UserAction::BACK_PRESS;
+        }
     }
 
     return UserAction::NONE;

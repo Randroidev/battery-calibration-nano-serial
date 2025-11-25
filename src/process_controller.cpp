@@ -1,7 +1,7 @@
 #include "process_controller.h"
 #include "led_indicator.h"
-#include "config_manager.h" // Will be created later
-#include "display_manager.h" // Will be created later
+#include "config_manager.h"
+#include "ui_manager.h"
 #include <cmath>
 
 #define RELAY_PIN_CHARGE 6
@@ -29,7 +29,7 @@ bool ProcessController::is_busy() const {
 }
 
 void ProcessController::stop_process() {
-    display_draw_text("Process finished.", 10, 50, 0xFFFF, 0x0000);
+    ui_manager_print_message("Process finished.");
     control_relays(false, false);
     led_turn_off_all();
     current_process = Process::IDLE;
@@ -38,7 +38,7 @@ void ProcessController::stop_process() {
 }
 
 void ProcessController::start_charge() {
-    display_draw_text("Starting Charge...", 10, 50, 0xFFFF, 0x0000);
+    ui_manager_print_message("Starting Charge...");
     current_process = Process::CHARGE;
     consecutive_read_errors = 0;
     step_start_time = get_absolute_time();
@@ -48,7 +48,7 @@ void ProcessController::start_charge() {
 }
 
 void ProcessController::start_discharge() {
-    display_draw_text("Starting Discharge...", 10, 50, 0xFFFF, 0x0000);
+    ui_manager_print_message("Starting Discharge...");
     current_process = Process::DISCHARGE;
     consecutive_read_errors = 0;
     step_start_time = get_absolute_time();
@@ -58,7 +58,7 @@ void ProcessController::start_discharge() {
 }
 
 void ProcessController::start_calibration(int cycles) {
-    display_draw_text("Starting Calibration...", 10, 50, 0xFFFF, 0x0000);
+    ui_manager_print_message("Starting Calibration...");
     current_process = Process::CALIBRATION;
     consecutive_read_errors = 0;
     total_cycles = cycles;
@@ -102,9 +102,9 @@ void ProcessController::update_charge() {
     periodic_battery_check();
     if (should_stop_charging()) {
         if (battery.has_error()) {
-            display_draw_text("Error: Charge stopped.", 10, 60, 0xFFFF, 0x0000);
+            ui_manager_print_message("Error: Charge stopped.");
         } else {
-            display_draw_text("Charge finished.", 10, 60, 0xFFFF, 0x0000);
+            ui_manager_print_message("Charge finished.");
         }
         stop_process();
     }
@@ -114,9 +114,9 @@ void ProcessController::update_discharge() {
     periodic_battery_check();
     if (should_stop_discharging()) {
         if (battery.has_error()) {
-            display_draw_text("Error: Discharge stopped.", 10, 60, 0xFFFF, 0x0000);
+            ui_manager_print_message("Error: Discharge stopped.");
         } else {
-            display_draw_text("Discharge finished.", 10, 60, 0xFFFF, 0x0000);
+            ui_manager_print_message("Discharge finished.");
         }
         stop_process();
     }
@@ -132,7 +132,7 @@ void ProcessController::update_calibration() {
             control_relays(true, false);
             led_indicate_charge();
             if (should_stop_charging()) {
-                display_draw_text("Initial charge complete. Waiting...", 10, 60, 0xFFFF, 0x0000);
+                ui_manager_print_message("Initial charge complete. Waiting...");
                 led_indicate_charge_done();
                 step_start_time = get_absolute_time();
                 calib_step = CalibrationStep::PRE_CALIB_WAITING;
@@ -147,7 +147,7 @@ void ProcessController::update_calibration() {
             break;
 
         case CalibrationStep::START_DISCHARGE:
-            display_draw_text("Starting Discharge Phase...", 10, 60, 0xFFFF, 0x0000);
+            ui_manager_print_message("Starting Discharge Phase...");
             control_relays(false, true);
             led_indicate_discharge();
             step_start_time = get_absolute_time();
@@ -156,7 +156,7 @@ void ProcessController::update_calibration() {
 
         case CalibrationStep::DISCHARGING:
             if (should_stop_discharging()) {
-                display_draw_text("Discharge complete. Waiting...", 10, 60, 0xFFFF, 0x0000);
+                ui_manager_print_message("Discharge complete. Waiting...");
                 control_relays(false, false);
                 led_indicate_waiting();
                 step_start_time = get_absolute_time();
@@ -172,7 +172,7 @@ void ProcessController::update_calibration() {
             break;
 
         case CalibrationStep::START_CHARGE:
-            display_draw_text("Starting Charge Phase...", 10, 60, 0xFFFF, 0x0000);
+            ui_manager_print_message("Starting Charge Phase...");
             control_relays(true, false);
             led_indicate_charge();
             step_start_time = get_absolute_time();
@@ -181,7 +181,7 @@ void ProcessController::update_calibration() {
 
         case CalibrationStep::CHARGING:
             if (should_stop_charging()) {
-                display_draw_text("Charge complete. Waiting...", 10, 60, 0xFFFF, 0x0000);
+                ui_manager_print_message("Charge complete. Waiting...");
                 led_indicate_charge_done();
                 step_start_time = get_absolute_time();
                 calib_step = CalibrationStep::POST_CHARGE_WAIT;
@@ -195,7 +195,7 @@ void ProcessController::update_calibration() {
                     current_cycle++;
                     calib_step = CalibrationStep::START_DISCHARGE;
                 } else {
-                    display_draw_text("All cycles complete.", 10, 60, 0xFFFF, 0x0000);
+                    ui_manager_print_message("All cycles complete.");
                     stop_process();
                 }
             }
@@ -210,7 +210,7 @@ void ProcessController::periodic_battery_check() {
         if (!battery.read_data()) {
             consecutive_read_errors++;
             if (consecutive_read_errors >= 3) {
-                display_draw_text("Aborting due to read errors.", 10, 60, 0xFFFF, 0x0000);
+                ui_manager_print_message("Aborting due to read errors.");
                 stop_process();
             }
             return;
