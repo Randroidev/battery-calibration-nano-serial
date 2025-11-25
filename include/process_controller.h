@@ -39,6 +39,8 @@ private:
     void update_calibration();
     void periodic_battery_check();
     void control_relays(bool charge, bool discharge);
+    bool should_stop_charging();
+    bool should_stop_discharging();
 
     BatteryManager& battery;
     Process current_process;

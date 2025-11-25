@@ -22,6 +22,9 @@ add_executable(${CMAKE_PROJECT_NAME}
     src/display_manager.cpp
     src/input_manager.cpp
     src/config_manager.cpp
+    src/font.cpp
+    src/battery_reporter.cpp
+    src/user_interface.cpp
 )
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)

@@ -2,6 +2,7 @@
 #include "led_indicator.h"
 #include "config_manager.h" // Will be created later
 #include "display_manager.h" // Will be created later
+#include <cmath>
 
 #define RELAY_PIN_CHARGE 6
 #define RELAY_PIN_DISCHARGE 7
@@ -79,16 +80,27 @@ void ProcessController::update() {
     }
 }
 
-void ProcessController::update_charge() {
-    periodic_battery_check();
-
-    bool stop_charging = battery.is_fully_charged() || battery.has_error();
+bool ProcessController::should_stop_charging() {
+    bool stop = battery.is_fully_charged() || battery.has_error();
     if (config_get()->use_additional_conditions) {
         const BatteryData& data = battery.get_data();
-        stop_charging = stop_charging || (data.voltage >= config_get()->charge_term_voltage || abs(data.current) < config_get()->charge_term_current);
+        stop = stop || (data.voltage >= config_get()->charge_term_voltage || abs(data.current) < config_get()->charge_term_current);
     }
+    return stop;
+}
 
-    if (stop_charging) {
+bool ProcessController::should_stop_discharging() {
+    bool stop = battery.is_fully_discharged() || battery.has_error();
+    if (config_get()->use_additional_conditions) {
+        const BatteryData& data = battery.get_data();
+        stop = stop || (data.voltage <= config_get()->discharge_term_voltage || abs(data.current) < config_get()->discharge_term_current);
+    }
+    return stop;
+}
+
+void ProcessController::update_charge() {
+    periodic_battery_check();
+    if (should_stop_charging()) {
         if (battery.has_error()) {
             display_draw_text("Error: Charge stopped.", 10, 60, 0xFFFF, 0x0000);
         } else {
@@ -100,14 +112,7 @@ void ProcessController::update_charge() {
 
 void ProcessController::update_discharge() {
     periodic_battery_check();
-
-    bool stop_discharging = battery.is_fully_discharged() || battery.has_error();
-    if (config_get()->use_additional_conditions) {
-        const BatteryData& data = battery.get_data();
-        stop_discharging = stop_discharging || (data.voltage <= config_get()->discharge_term_voltage || abs(data.current) < config_get()->discharge_term_current);
-    }
-
-    if (stop_discharging) {
+    if (should_stop_discharging()) {
         if (battery.has_error()) {
             display_draw_text("Error: Discharge stopped.", 10, 60, 0xFFFF, 0x0000);
         } else {
@@ -126,7 +131,7 @@ void ProcessController::update_calibration() {
         case CalibrationStep::PRE_CALIB_CHARGING:
             control_relays(true, false);
             led_indicate_charge();
-            if (battery.is_fully_charged() || battery.has_error()) {
+            if (should_stop_charging()) {
                 display_draw_text("Initial charge complete. Waiting...", 10, 60, 0xFFFF, 0x0000);
                 led_indicate_charge_done();
                 step_start_time = get_absolute_time();
@@ -150,7 +155,7 @@ void ProcessController::update_calibration() {
             break;
 
         case CalibrationStep::DISCHARGING:
-            if (battery.is_fully_discharged() || battery.has_error()) {
+            if (should_stop_discharging()) {
                 display_draw_text("Discharge complete. Waiting...", 10, 60, 0xFFFF, 0x0000);
                 control_relays(false, false);
                 led_indicate_waiting();
@@ -175,7 +180,7 @@ void ProcessController::update_calibration() {
             break;
 
         case CalibrationStep::CHARGING:
-            if (battery.is_fully_charged() || battery.has_error()) {
+            if (should_stop_charging()) {
                 display_draw_text("Charge complete. Waiting...", 10, 60, 0xFFFF, 0x0000);
                 led_indicate_charge_done();
                 step_start_time = get_absolute_time();
