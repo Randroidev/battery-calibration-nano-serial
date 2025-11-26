@@ -43,7 +43,7 @@ static void write_data(const uint8_t* data, size_t len) {
     gpio_put(SPI_CS_PIN, 1);
 }
 
-void display_init() {
+void st7789_init() {
     spi_init(SPI_PORT, 1000 * 1000 * 20); // 20 MHz
     gpio_set_function(SPI_MOSI_PIN, GPIO_FUNC_SPI);
     gpio_set_function(SPI_SCK_PIN, GPIO_FUNC_SPI);
@@ -85,10 +85,10 @@ void display_init() {
     write_command(ST7789_DISPON);
     sleep_ms(255);
 
-    display_clear();
+    st7789_clear();
 }
 
-void display_clear() {
+void st7789_clear() {
     uint16_t black = 0x0000;
     std::vector<uint16_t> buffer(DISPLAY_WIDTH * DISPLAY_HEIGHT, black);
 
@@ -114,7 +114,7 @@ static void set_pixel(int x, int y, uint16_t color) {
     }
 }
 
-void display_draw_text(const std::string& text, int x, int y, uint16_t color, uint16_t bg_color) {
+void st7789_draw_text(const std::string& text, int x, int y, uint16_t color, uint16_t bg_color) {
     int start_x = x;
     for (char c : text) {
         if (c == '\n') {
@@ -146,7 +146,7 @@ static void render_framebuffer() {
     write_data((uint8_t*)framebuffer, sizeof(framebuffer));
 }
 
-void display_update_data(const BatteryData& data) {
+void st7789_update_data(const BatteryData& data) {
     char buffer[50];
     sprintf(buffer, "Voltage: %d mV", data.voltage);
     display_draw_text(buffer, 10, 10, 0xFFFF);
@@ -157,7 +157,7 @@ void display_update_data(const BatteryData& data) {
     render_framebuffer();
 }
 
-void display_draw_menu(const std::vector<std::string>& items, int selected_index) {
+void st7789_draw_menu(const std::vector<std::string>& items, int selected_index) {
     int y = 10;
     for (int i = 0; i < items.size(); i++) {
         if (i == selected_index) {
