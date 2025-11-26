@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+void st7789_clear(); // Forward declaration
+
 // Display SPI settings
 #define SPI_PORT spi0
 #define SPI_MOSI_PIN 19
