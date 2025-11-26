@@ -3,7 +3,16 @@
 
 #include <cstdint>
 
+#define CONFIG_MAGIC 0xDEADBEEF
+
+enum DisplayType {
+    ST7789_240x240,
+    ST7735_128x160
+};
+
 struct AppConfig {
+    uint32_t magic;
+    DisplayType display_type;
     bool use_additional_conditions;
     uint16_t charge_term_voltage;
     uint16_t charge_term_current;

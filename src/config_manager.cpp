@@ -12,8 +12,9 @@ static uint8_t* get_flash_target_addr() {
     return (uint8_t*)(XIP_BASE + FLASH_TARGET_OFFSET);
 }
 
-void config_init() {
-    // Load default values
+static void set_defaults() {
+    current_config.magic = CONFIG_MAGIC;
+    current_config.display_type = ST7789_240x240;
     current_config.use_additional_conditions = true;
     current_config.charge_term_voltage = 12600;
     current_config.charge_term_current = 10;
@@ -22,18 +23,23 @@ void config_init() {
     current_config.pre_charge_wait_ms = 1800000;
     current_config.charge_wait_ms = 3600000;
     current_config.discharge_wait_ms = 18000000;
+}
 
-    // Try to load from flash
+void config_init() {
     config_load();
+    if (current_config.magic != CONFIG_MAGIC) {
+        set_defaults();
+        config_save();
+    }
 }
 
 void config_load() {
     const uint8_t* flash_addr = get_flash_target_addr();
     memcpy(&current_config, flash_addr, sizeof(AppConfig));
-    // A simple validity check could be added here (e.g., magic number)
 }
 
 void config_save() {
+    current_config.magic = CONFIG_MAGIC;
     uint8_t buffer[FLASH_PAGE_SIZE];
     memset(buffer, 0xFF, FLASH_PAGE_SIZE);
     memcpy(buffer, &current_config, sizeof(AppConfig));

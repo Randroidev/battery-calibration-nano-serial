@@ -19,6 +19,8 @@ add_executable(${CMAKE_PROJECT_NAME}
     src/battery_manager.cpp
     src/process_controller.cpp
     src/led_indicator.cpp
+    src/st7789_driver.cpp
+    src/st7735_driver.cpp
     src/display_manager.cpp
     src/input_manager.cpp
     src/config_manager.cpp
