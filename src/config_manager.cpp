@@ -23,6 +23,8 @@ static void set_defaults() {
     current_config.pre_charge_wait_ms = 1800000;
     current_config.charge_wait_ms = 3600000;
     current_config.discharge_wait_ms = 18000000;
+    current_config.calibration_cycles = 1;
+    current_config.demo_stage_duration_ms = 3000;
 }
 
 void config_init() {

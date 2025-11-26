@@ -7,7 +7,8 @@ enum class Process {
     IDLE,
     CHARGE,
     DISCHARGE,
-    CALIBRATION
+    CALIBRATION,
+    CALIBRATION_DEMO
 };
 
 enum class CalibrationStep {
@@ -30,6 +31,7 @@ public:
     void start_charge();
     void start_discharge();
     void start_calibration(int cycles);
+    void start_calibration_demo();
     void stop_process();
     void update();
 

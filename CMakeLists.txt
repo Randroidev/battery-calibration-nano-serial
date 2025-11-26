@@ -13,6 +13,9 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the Pico SDK
 pico_sdk_init()
 
+# Add library subdirectory
+add_subdirectory(lib/displaylib)
+
 # Add executable and include directories
 add_executable(${CMAKE_PROJECT_NAME}
     src/main.cpp
@@ -34,6 +37,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
 
 # Link to Pico SDK libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
+    displaylib
     pico_stdlib
     hardware_gpio
     hardware_i2c

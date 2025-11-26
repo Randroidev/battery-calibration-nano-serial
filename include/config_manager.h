@@ -21,6 +21,8 @@ struct AppConfig {
     uint32_t pre_charge_wait_ms;
     uint32_t charge_wait_ms;
     uint32_t discharge_wait_ms;
+    uint8_t calibration_cycles;
+    uint32_t demo_stage_duration_ms;
 };
 
 void config_init();

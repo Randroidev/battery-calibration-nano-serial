@@ -127,3 +127,43 @@ void BatteryManager::parse_status_flags(uint16_t status_word) {
     data.fully_charged = (status_word & 0x0020) != 0;
     data.fully_discharged = (status_word & 0x0010) != 0;
 }
+
+void BatteryManager::generate_demo_data(int state) {
+  data.manufacturer_name = "DEMO INC.";
+  data.device_name = "DEMO-BATT";
+  data.chemistry = "LION";
+  data.design_capacity = 6000;
+  data.design_voltage = 11100;
+  data.manufacture_date = (2023-1980)*512 + 10*32 + 26;
+  data.serial_number = 12345;
+  data.specification_info = 33;
+  data.cycle_count = 10;
+  data.charging_current = 1500;
+  data.charging_voltage = 12600;
+  data.error_condition = false;
+  data.fully_charged = false;
+  data.fully_discharged = false;
+
+  if (state == 0) { // Discharging
+    data.relative_state_of_charge = std::max(0, data.relative_state_of_charge - 20);
+    data.current = -1500;
+    if (data.relative_state_of_charge <= 5) data.fully_discharged = true;
+  } else if (state == 1) { // Charging
+    data.relative_state_of_charge = std::min(100, data.relative_state_of_charge + 20);
+    data.current = 2000;
+    if (data.relative_state_of_charge >= 99) data.fully_charged = true;
+  } else { // Idle
+    data.current = 0;
+  }
+
+  data.absolute_state_of_charge = data.relative_state_of_charge;
+  data.remaining_capacity = (uint16_t)(5000L * data.relative_state_of_charge / 100);
+  data.full_charge_capacity = 5000;
+  data.voltage = 10000 + (25 * data.relative_state_of_charge);
+  data.temperature = 2982;
+  data.cell_voltage_1 = data.voltage/3;
+  data.cell_voltage_2 = data.voltage/3;
+  data.cell_voltage_3 = data.voltage/3;
+  data.cell_voltage_4 = 0;
+  data.state_of_health = 95;
+}

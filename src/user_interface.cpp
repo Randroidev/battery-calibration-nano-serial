@@ -2,6 +2,7 @@
 #include "ui_manager.h"
 #include "input_manager.h"
 #include "config_manager.h"
+#include "hardware/watchdog.h"
 #include <vector>
 #include <string>
 #include <stdio.h>
@@ -17,8 +18,19 @@ static UIState current_state = UIState::MAIN_MENU;
 static int menu_index = 0;
 static int settings_menu_index = 0;
 
-static std::vector<std::string> main_menu_items = {"Start Charge", "Start Discharge", "Start Calibration", "Settings"};
+static std::vector<std::string> main_menu_items = {"Start Charge", "Start Discharge", "Start Calibration", "Calibration Demo", "Settings"};
 static std::vector<std::string> settings_menu_items;
+
+static std::string format_time(uint32_t ms) {
+    uint32_t seconds = ms / 1000;
+    uint32_t hours = seconds / 3600;
+    seconds %= 3600;
+    uint32_t minutes = seconds / 60;
+    seconds %= 60;
+    char buffer[20];
+    sprintf(buffer, "%luh %lum %lus", hours, minutes, seconds);
+    return std::string(buffer);
+}
 
 static void populate_settings_menu() {
     settings_menu_items.clear();
@@ -35,12 +47,12 @@ static void populate_settings_menu() {
     settings_menu_items.push_back(buffer);
     sprintf(buffer, "Discharge Term A: %d", config->discharge_term_current);
     settings_menu_items.push_back(buffer);
-    sprintf(buffer, "Pre-Charge Wait: %lu", config->pre_charge_wait_ms);
+    settings_menu_items.push_back("Pre-Charge Wait: " + format_time(config->pre_charge_wait_ms));
+    settings_menu_items.push_back("Charge Wait: " + format_time(config->charge_wait_ms));
+    settings_menu_items.push_back("Discharge Wait: " + format_time(config->discharge_wait_ms));
+    sprintf(buffer, "Calibration Cycles: %d", config->calibration_cycles);
     settings_menu_items.push_back(buffer);
-    sprintf(buffer, "Charge Wait: %lu", config->charge_wait_ms);
-    settings_menu_items.push_back(buffer);
-    sprintf(buffer, "Discharge Wait: %lu", config->discharge_wait_ms);
-    settings_menu_items.push_back(buffer);
+    settings_menu_items.push_back("Demo Stage Time: " + format_time(config->demo_stage_duration_ms));
 }
 
 static void draw_menu() {
@@ -77,6 +89,9 @@ void ui_update_main_menu(UserAction action) {
                 settings_menu_index = 0;
                 draw_menu();
             }
+            break;
+        case UserAction::BACK_PRESS: // Escape in main menu
+            watchdog_reboot(0, 0, 100);
             break;
         default: break;
     }
@@ -119,6 +134,14 @@ void ui_update_edit_setting(UserAction action) {
         case 7: // discharge_wait_ms
             if (action == UserAction::ENCODER_UP) config->discharge_wait_ms += long_step;
             if (action == UserAction::ENCODER_DOWN) config->discharge_wait_ms -= long_step;
+            break;
+        case 8: // calibration_cycles
+            if (action == UserAction::ENCODER_UP) config->calibration_cycles++;
+            if (action == UserAction::ENCODER_DOWN) config->calibration_cycles--;
+            break;
+        case 9: // demo_stage_duration_ms
+            if (action == UserAction::ENCODER_UP) config->demo_stage_duration_ms += 1000;
+            if (action == UserAction::ENCODER_DOWN) config->demo_stage_duration_ms -= 1000;
             break;
     }
 

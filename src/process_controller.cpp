@@ -75,7 +75,8 @@ void ProcessController::update() {
     switch (current_process) {
         case Process::CHARGE:      update_charge(); break;
         case Process::DISCHARGE:   update_discharge(); break;
-        case Process::CALIBRATION: update_calibration(); break;
+        case Process::CALIBRATION: update_calibration(false); break;
+        case Process::CALIBRATION_DEMO: update_calibration(true); break;
         case Process::IDLE: break;
     }
 }
@@ -122,8 +123,20 @@ void ProcessController::update_discharge() {
     }
 }
 
-void ProcessController::update_calibration() {
-    periodic_battery_check();
+void ProcessController::start_calibration_demo() {
+    ui_manager_print_message("Starting Calibration Demo...");
+    current_process = Process::CALIBRATION_DEMO;
+    consecutive_read_errors = 0;
+    total_cycles = 1; // Just one cycle for demo
+    current_cycle = 1;
+    process_start_time = get_absolute_time();
+    step_start_time = get_absolute_time();
+    last_battery_read = get_absolute_time();
+    calib_step = CalibrationStep::PRE_CALIB_CHARGING;
+}
+
+void ProcessController::update_calibration(bool is_demo) {
+    periodic_battery_check(is_demo);
 
     int64_t wait_time_ms = 0;
 
@@ -203,11 +216,20 @@ void ProcessController::update_calibration() {
     }
 }
 
-void ProcessController::periodic_battery_check() {
-    if (absolute_time_diff_us(last_battery_read, get_absolute_time()) / 1000 >= BATTERY_READ_INTERVAL_MS) {
+void ProcessController::periodic_battery_check(bool is_demo) {
+    uint32_t interval = is_demo ? config_get()->demo_stage_duration_ms : BATTERY_READ_INTERVAL_MS;
+    if (absolute_time_diff_us(last_battery_read, get_absolute_time()) / 1000 >= interval) {
         last_battery_read = get_absolute_time();
 
-        if (!battery.read_data()) {
+        if (is_demo) {
+            int state = 0; // Discharging
+            if (calib_step == CalibrationStep::CHARGING || calib_step == CalibrationStep::PRE_CALIB_CHARGING) {
+                state = 1; // Charging
+            } else if (calib_step != CalibrationStep::DISCHARGING) {
+                state = 2; // Idle
+            }
+            battery.generate_demo_data(state);
+        } else if (!battery.read_data()) {
             consecutive_read_errors++;
             if (consecutive_read_errors >= 3) {
                 ui_manager_print_message("Aborting due to read errors.");

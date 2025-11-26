@@ -46,6 +46,7 @@ public:
     bool is_fully_charged() const;
     bool is_fully_discharged() const;
     bool has_error() const;
+    void generate_demo_data(int state);
 
 private:
     uint16_t read_smbus_word(uint8_t command);

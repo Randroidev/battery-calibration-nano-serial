@@ -71,21 +71,25 @@ UserAction input_get_action() {
     // Check for terminal input
     int c = getchar_timeout_us(0);
     if (c != PICO_ERROR_TIMEOUT) {
-        switch (c) {
-            case 'w':
-            case 'W':
-                return UserAction::ENCODER_UP;
-            case 's':
-            case 'S':
-                return UserAction::ENCODER_DOWN;
-            case 'e':
-            case 'E':
-            case '\r':
-            case '\n':
-                return UserAction::ENCODER_PRESS;
-            case 'q':
-            case 'Q':
-                return UserAction::BACK_PRESS;
+        if (c == 27) { // Escape sequence
+            c = getchar_timeout_us(1000);
+            if (c == '[') {
+                c = getchar_timeout_us(1000);
+                switch (c) {
+                    case 'A': return UserAction::ENCODER_UP;
+                    case 'B': return UserAction::ENCODER_DOWN;
+                    case 'C': return UserAction::ENCODER_RIGHT;
+                    case 'D': return UserAction::ENCODER_LEFT;
+                }
+            } else {
+                return UserAction::BACK_PRESS; // Standalone Escape
+            }
+        } else {
+            switch (c) {
+                case '\r':
+                case '\n':
+                    return UserAction::ENCODER_PRESS;
+            }
         }
     }
 

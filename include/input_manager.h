@@ -5,6 +5,8 @@ enum class UserAction {
     NONE,
     ENCODER_UP,
     ENCODER_DOWN,
+    ENCODER_LEFT,
+    ENCODER_RIGHT,
     ENCODER_PRESS,
     BACK_PRESS
 };
